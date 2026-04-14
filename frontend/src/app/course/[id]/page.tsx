@@ -1,112 +1,138 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 
-const COURSE_DATA = {
-  "1": { 
-    title: "Programming from Scratch", 
-    videoId: "dQw4w9WgXcQ", 
-    teacher: "Irana Rahmanova",
-    details: "Focus on Next.js fundamentals, folder structure, and interactive components."
-  },
-  "2": { 
-    title: "Design Fundamentals", 
-    videoId: "66vWv8-KndI", 
-    teacher: "Rashad Aliyev",
-    details: "Deep dive into Figma tools, layer management, and modern color theory."
-  },
-  "3": { 
-    title: "Data Analytics", 
-    videoId: "ua-CiDNNj30", 
-    teacher: "Nigar Mammadova",
-    details: "Core concepts of Big Data, data cleaning, and visual storytelling."
-  }
-};
-
-export default function CourseVideoPage() {
+export default function CourseDetails() {
   const params = useParams();
-  const router = useRouter();
   const id = params.id as string;
   
+  const [course, setCourse] = useState<any>(null);
+  const [lessons, setLessons] = useState<any[]>([]); 
+  const [activeLesson, setActiveLesson] = useState<any>(null); 
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setTimeout(() => { router.push("/login"); }, 2000);
-      } else {
-        setUser(session.user);
+    const fetchData = async () => {
+      // 1. Kursun məlumatlarını gətiririk
+      const { data: courseData } = await supabase
+        .from("courses")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      // 2. Bu kursa aid dərsləri gətiririk
+      const { data: lessonsData } = await supabase
+        .from("lessons")
+        .select("*")
+        .eq("course_id", id)
+        .order("order_index", { ascending: true });
+
+      if (courseData) setCourse(courseData);
+      
+      if (lessonsData && lessonsData.length > 0) {
+        setLessons(lessonsData);
+        setActiveLesson(lessonsData[0]); 
       }
       setLoading(false);
     };
-    checkUser();
-  }, [router]);
 
-  const course = COURSE_DATA[id as keyof typeof COURSE_DATA];
+    if (id) fetchData();
+  }, [id]);
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#06402B]"></div>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#06402B]"></div>
+      </div>
+    );
+  }
 
-  if (!user) return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
-      <h2 className="text-2xl font-bold text-red-600">Access Restricted 🛑</h2>
-      <p className="mt-2 text-gray-500">Redirecting to Login page...</p>
-    </div>
-  );
-
-  if (!course) return <div className="p-20 text-center text-[#06402B]">Course not found.</div>;
+  if (!course) {
+    return (
+      <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50">
+        <h1 className="text-3xl font-bold text-gray-800 mb-4">Course not found</h1>
+        <Link href="/" className="bg-[#06402B] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#043020]">
+          Go back home
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <Link href="/" className="inline-flex items-center text-[#06402B] hover:underline mb-8 font-bold">
-        ← Back to Courses
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <Link href="/" className="text-[#06402B] font-bold mb-6 inline-block hover:opacity-80">
+        ← Back to Home
       </Link>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <div className="lg:col-span-2">
-          <div className="relative pt-[56.25%] bg-black rounded-[2rem] overflow-hidden shadow-2xl">
-            <iframe className="absolute top-0 left-0 w-full h-full" src={`https://www.youtube.com/embed/${course.videoId}`} frameBorder="0" allowFullScreen></iframe>
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Sol tərəf: Video Player və Kurs Məlumatı */}
+        <div className="flex-1">
+          <div className="w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl relative">
+            {activeLesson ? (
+              activeLesson.is_free ? (
+                <iframe 
+                  src={activeLesson.video_url} 
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowFullScreen
+                ></iframe>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900 text-white p-6 text-center">
+                  <span className="text-6xl mb-4">🔒</span>
+                  <h2 className="text-2xl font-bold mb-2">This lesson is locked</h2>
+                  <p className="text-gray-400 mb-6">Purchase the course to unlock all lessons and premium materials.</p>
+                  
+                  {/* ÖDƏNİŞ SƏHİFƏSİNƏ KEÇİD DÜYMƏSİ */}
+                  <Link 
+                    href={`/checkout/${course.id}`}
+                    className="bg-[#06402B] hover:bg-[#043020] px-8 py-4 rounded-xl font-bold text-lg transition-all shadow-lg active:scale-95"
+                  >
+                    Unlock Full Course
+                  </Link>
+                </div>
+              )
+            ) : (
+              <img src={course.image} alt={course.title} className="w-full h-full object-cover opacity-50" />
+            )}
           </div>
-          
-          <div className="mt-8 bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
-            <h1 className="text-3xl font-extrabold text-[#06402B]">{course.title}</h1>
-            <div className="flex items-center mt-6 space-x-4">
-              <div className="h-14 w-14 bg-[#06402B] rounded-2xl flex items-center justify-center text-white font-bold text-2xl">
-                {course.teacher[0]}
-              </div>
-              <div>
-                <p className="text-[10px] text-gray-400 uppercase font-black tracking-[0.2em]">Lead Instructor</p>
-                <p className="text-xl font-bold text-gray-800">{course.teacher}</p>
-              </div>
-            </div>
+
+          <div className="mt-8">
+            <h1 className="text-4xl font-black text-[#06402B] mb-4">{course.title}</h1>
+            <p className="text-gray-600 text-lg leading-relaxed">{course.description}</p>
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
-            <h3 className="text-xl font-bold text-[#06402B] mb-4 border-b pb-4">Course Info</h3>
-            <p className="text-gray-600 leading-relaxed font-medium italic">"{course.details}"</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-[#06402B] to-[#032015] p-8 rounded-[2rem] text-white shadow-xl">
-            <h3 className="text-lg font-bold mb-1">Student: {user.email?.split('@')[0]}</h3>
-            <p className="text-xs opacity-70 mb-6 italic">Enrolled Student</p>
-            <div className="w-full bg-white/20 h-2.5 rounded-full overflow-hidden">
-              <div className="bg-white w-1/3 h-full shadow-[0_0_10px_white]"></div>
+        {/* Sağ tərəf: Dərslərin Siyahısı */}
+        <div className="w-full lg:w-1/3 bg-white border border-gray-100 rounded-3xl p-6 shadow-xl h-fit sticky top-8">
+          <h3 className="text-2xl font-bold text-gray-800 mb-6">Course Content</h3>
+          
+          {lessons.length > 0 ? (
+            <div className="space-y-3">
+              {lessons.map((lesson) => (
+                <button 
+                  key={lesson.id}
+                  onClick={() => setActiveLesson(lesson)}
+                  className={`w-full text-left p-4 rounded-xl flex items-center justify-between transition-all ${
+                    activeLesson?.id === lesson.id 
+                      ? "bg-[#06402B] text-white shadow-md" 
+                      : "bg-gray-50 hover:bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">
+                      {lesson.is_free ? "▶️" : "🔒"}
+                    </span>
+                    <span className="font-semibold">{lesson.title}</span>
+                  </div>
+                </button>
+              ))}
             </div>
-            <p className="text-[10px] mt-4 font-bold uppercase tracking-widest">33% Completed</p>
-            <button className="w-full mt-8 bg-white text-[#06402B] py-4 rounded-2xl font-black text-sm hover:bg-gray-100 transition-all transform hover:-translate-y-1">
-              Download Certificate
-            </button>
-          </div>
+          ) : (
+            <p className="text-gray-500 italic">No lessons added yet.</p>
+          )}
         </div>
       </div>
     </div>
