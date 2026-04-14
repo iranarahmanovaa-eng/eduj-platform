@@ -1,181 +1,153 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function CheckoutPage() {
   const params = useParams();
-  const id = params.id as string;
   const router = useRouter();
-  
-  const [course, setCourse] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState("card");
-  const [plan, setPlan] = useState("lifetime");
-  const [processing, setProcessing] = useState(false);
   const [deviceType, setDeviceType] = useState<"apple" | "google">("google");
+  const [paymentMethod, setPaymentMethod] = useState("card");
+  const brandColor = "#004d57";
 
   useEffect(() => {
-    // Cihazı yoxlayırıq (Apple yoxsa digərləri)
+    // Detect OS for Apple/Google Pay
     const isApple = /Mac|iPhone|iPod|iPad/.test(navigator.userAgent);
     setDeviceType(isApple ? "apple" : "google");
-
-    const fetchCourse = async () => {
-      const { data } = await supabase.from("courses").select("*").eq("id", id).single();
-      if (data) setCourse(data);
-      setLoading(false);
-    };
-    if (id) fetchCourse();
-  }, [id]);
-
-  const handlePayment = (e: React.FormEvent) => {
-    e.preventDefault();
-    setProcessing(true);
-    setTimeout(() => {
-      alert("✅ Order confirmed! Access granted.");
-      router.push(`/course/${id}`);
-    }, 2500);
-  };
-
-  if (loading) return <div className="min-h-screen flex justify-center items-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#06402B]"></div></div>;
-
-  const price = plan === "lifetime" ? "49.99" : "14.99";
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] py-12 px-4">
+    <div className="min-h-screen bg-[#F8FAFB] py-16 px-6 font-sans">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-black text-gray-900 mb-8 tracking-tight italic uppercase">Complete Your Order</h1>
-        
-        <div className="flex flex-col lg:flex-row gap-10">
+        {/* Header Section */}
+        <div className="mb-10 flex flex-col md:flex-row justify-between items-end gap-4 border-b border-gray-100 pb-10">
+          <div>
+            <h1 className="text-4xl font-black italic uppercase tracking-tighter" style={{ color: brandColor }}>Checkout</h1>
+            <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest mt-2">Secure Academic Enrollment</p>
+          </div>
+          <Link href={`/course/${params.id}`} className="text-[10px] font-black uppercase italic text-gray-400 hover:text-black transition-all">
+            Cancel and Return
+          </Link>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-12">
           
-          {/* LEFT SIDE: Payment Methods */}
-          <div className="flex-1 space-y-6">
+          {/* LEFT SIDE: PAYMENT & BILLING */}
+          <div className="flex-1 space-y-8">
             
-            {/* Plan Selection */}
-            <section className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
-              <h2 className="text-lg font-bold mb-5 flex items-center gap-2 text-gray-800">
-                <span className="w-6 h-6 bg-[#06402B] text-white rounded-full flex items-center justify-center text-[10px]">01</span>
-                SELECT PLAN
+            {/* 01. BILLING ADDRESS */}
+            <section className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+              <h2 className="text-xs font-black uppercase italic text-gray-400 mb-6 flex items-center gap-2">
+                 <span className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center text-[10px] text-gray-500">1</span>
+                 Billing Address
               </h2>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div 
-                  onClick={() => setPlan("lifetime")}
-                  className={`p-6 rounded-2xl border-2 cursor-pointer transition-all ${plan === "lifetime" ? "border-[#06402B] bg-green-50" : "border-gray-100 bg-gray-50 hover:bg-white"}`}
-                >
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-bold">Lifetime</span>
-                    <span className="font-black text-[#06402B]">$49.99</span>
-                  </div>
-                  <p className="text-xs text-gray-500">Pay once, study forever</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase italic text-gray-400 ml-2">Country</label>
+                  <select className="w-full p-4 rounded-xl border border-gray-200 font-bold outline-none appearance-none bg-gray-50 focus:border-[#004d57]">
+                    <option>Poland</option>
+                    <option>Azerbaijan</option>
+                    <option>United States</option>
+                    <option>United Kingdom</option>
+                  </select>
                 </div>
-                <div 
-                  onClick={() => setPlan("monthly")}
-                  className={`p-6 rounded-2xl border-2 cursor-pointer transition-all ${plan === "monthly" ? "border-[#06402B] bg-green-50" : "border-gray-100 bg-gray-50 hover:bg-white"}`}
-                >
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-bold">Monthly</span>
-                    <span className="font-black text-[#06402B]">$14.99</span>
-                  </div>
-                  <p className="text-xs text-gray-500">Full access for 30 days</p>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-black uppercase italic text-gray-400 ml-2">State / Province</label>
+                  <input type="text" placeholder="Required" className="w-full p-4 rounded-xl border border-gray-200 font-bold bg-gray-50 focus:border-[#004d57] outline-none" />
                 </div>
               </div>
             </section>
 
-            {/* Payment Options */}
-            <section className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 space-y-4">
-              <h2 className="text-lg font-bold mb-5 flex items-center gap-2 text-gray-800">
-                <span className="w-6 h-6 bg-[#06402B] text-white rounded-full flex items-center justify-center text-[10px]">02</span>
-                PAYMENT METHOD
+            {/* 02. PAYMENT SELECTION */}
+            <section className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+              <h2 className="text-xs font-black uppercase italic text-gray-400 mb-6 flex items-center gap-2">
+                 <span className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center text-[10px] text-gray-500">2</span>
+                 Payment Method
               </h2>
-
-              {/* Card Option */}
-              <div className={`p-5 rounded-2xl border-2 cursor-pointer ${paymentMethod === 'card' ? "border-[#06402B]" : "border-gray-100 bg-gray-50"}`} onClick={() => setPaymentMethod('card')}>
-                <div className="flex justify-between items-center">
-                  <span className="font-bold flex items-center gap-2">💳 Credit Card</span>
-                  {paymentMethod === 'card' && <span className="text-[#06402B] text-xl">●</span>}
-                </div>
-                {paymentMethod === 'card' && (
-                  <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-1">
-                    <input type="text" placeholder="Card Number" className="w-full p-3 rounded-xl border bg-white outline-none focus:ring-1 focus:ring-[#06402B]" />
-                    <div className="flex gap-3">
-                      <input type="text" placeholder="MM/YY" className="w-1/2 p-3 rounded-xl border bg-white outline-none" />
-                      <input type="text" placeholder="CVC" className="w-1/2 p-3 rounded-xl border bg-white outline-none" />
-                    </div>
+              
+              <div className="grid grid-cols-1 gap-3">
+                {/* Credit Card */}
+                <div 
+                  onClick={() => setPaymentMethod("card")} 
+                  className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex justify-between items-center ${paymentMethod === 'card' ? "border-[#004d57] bg-teal-50/20" : "border-gray-50 bg-gray-50/30 hover:bg-gray-50"}`}
+                >
+                  <span className="font-black text-xs italic uppercase tracking-tighter">💳 Credit / Debit Card</span>
+                  <div className="flex gap-2">
+                    <span className="text-[8px] bg-white px-2 py-1 border rounded font-black">VISA</span>
+                    <span className="text-[8px] bg-white px-2 py-1 border rounded font-black">MASTERCARD</span>
                   </div>
-                )}
-              </div>
-
-              {/* Blik Option */}
-              <div className={`p-5 rounded-2xl border-2 cursor-pointer ${paymentMethod === 'blik' ? "border-[#06402B]" : "border-gray-100 bg-gray-50"}`} onClick={() => setPaymentMethod('blik')}>
-                <div className="flex justify-between items-center">
-                  <span className="font-bold flex items-center gap-2">🔢 BLIK</span>
                 </div>
-                {paymentMethod === 'blik' && (
-                  <div className="mt-4 animate-in fade-in slide-in-from-top-1">
-                    <input type="text" maxLength={6} placeholder="6-digit BLIK code" className="w-full p-3 rounded-xl border bg-white text-center font-bold tracking-widest outline-none" />
-                  </div>
-                )}
-              </div>
 
-              {/* Apple or Google Pay Dynamic Option */}
-              <div className={`p-5 rounded-2xl border-2 cursor-pointer ${paymentMethod === 'express' ? "border-[#06402B]" : "border-gray-100 bg-gray-50"}`} onClick={() => setPaymentMethod('express')}>
-                <div className="flex justify-between items-center">
-                  <span className="font-bold flex items-center gap-2">
-                    {deviceType === 'apple' ? " Apple Pay" : "🤖 Google Pay"}
+                {/* Mobile Pay (Dynamic) */}
+                <div 
+                  onClick={() => setPaymentMethod("mobile")} 
+                  className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex justify-between items-center ${paymentMethod === 'mobile' ? "border-[#004d57] bg-teal-50/20" : "border-gray-50 bg-gray-50/30 hover:bg-gray-50"}`}
+                >
+                  <span className="font-black text-xs italic uppercase tracking-tighter">
+                    {deviceType === "apple" ? " Apple Pay" : "🤖 Google Pay"}
                   </span>
+                  <span className="text-[10px] opacity-40">Express Checkout</span>
+                </div>
+
+                {/* BLIK */}
+                <div 
+                  onClick={() => setPaymentMethod("blik")} 
+                  className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex justify-between items-center ${paymentMethod === 'blik' ? "border-[#004d57] bg-teal-50/20" : "border-gray-50 bg-gray-50/30 hover:bg-gray-50"}`}
+                >
+                  <span className="font-black text-xs italic uppercase tracking-tighter">🔢 BLIK Code</span>
+                  <span className="text-[10px] opacity-40">Instant Mobile Bank</span>
                 </div>
               </div>
             </section>
           </div>
 
-          {/* RIGHT SIDE: Enhanced Summary */}
-          <div className="lg:w-[420px]">
-            <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl border border-gray-50 sticky top-8">
-              <h2 className="text-xl font-bold mb-6">Summary</h2>
+          {/* RIGHT SIDE: SUMMARY & ACTION */}
+          <div className="lg:w-[400px]">
+            <div className="bg-white p-10 rounded-[3rem] shadow-2xl border border-gray-50 sticky top-10">
+              <h3 className="text-xs font-black uppercase italic text-gray-400 mb-8 tracking-widest text-center">Summary</h3>
               
-              {/* Course Info Block */}
-              <div className="mb-6">
-                <img src={course.image} className="w-full h-40 object-cover rounded-2xl mb-4 shadow-sm" />
-                <h3 className="font-black text-xl text-[#06402B] mb-2">{course.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed mb-4">
-                  {course.description}
-                </p>
-                <div className="bg-blue-50 p-4 rounded-xl text-[11px] text-blue-700 space-y-1">
-                  <p>✅ Full Lifetime Access</p>
-                  <p>✅ Certificate of Completion</p>
-                  <p>✅ 24/7 Premium Support</p>
+              <div className="space-y-4 mb-10">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500 font-bold italic">Original Price</span>
+                  <span className="font-black text-gray-400 line-through">$89.99</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500 font-bold italic">Student Discount</span>
+                  <span className="font-black text-teal-600">-$50.00</span>
+                </div>
+                <div className="h-px bg-gray-50 my-6"></div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-black uppercase italic text-gray-400 tracking-tighter">Total Due</span>
+                  <span className="text-4xl font-black italic tracking-tighter" style={{ color: brandColor }}>$39.99</span>
                 </div>
               </div>
 
-              <div className="space-y-3 py-6 border-t border-gray-100">
-                <div className="flex justify-between text-gray-500 text-sm">
-                  <span>List Price</span>
-                  <span className="line-through">$99.99</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-bold">Total:</span>
-                  <span className="text-3xl font-black text-[#06402B]">${price}</span>
-                </div>
+              <div className="bg-teal-50/50 p-6 rounded-2xl mb-10 border border-teal-100">
+                <p className="text-[10px] leading-relaxed text-teal-900 italic font-bold uppercase tracking-tighter">
+                  Start your transformation today. This is a one-time purchase with lifetime updates.
+                </p>
               </div>
 
               <button 
-                onClick={handlePayment}
-                disabled={processing}
-                className="w-full bg-[#06402B] text-white py-5 rounded-2xl font-bold text-lg shadow-xl hover:bg-[#043020] transition-all active:scale-95 disabled:opacity-70 mt-4"
+                onClick={() => alert("Redirecting to Secure Gateway...")}
+                style={{ backgroundColor: brandColor }}
+                className="w-full text-white py-6 rounded-2xl font-black italic uppercase text-lg shadow-xl hover:translate-y-[-4px] active:scale-95 transition-all"
               >
-                {processing ? "VERIFYING..." : "COMPLETE PURCHASE"}
+                Complete Enrollment
               </button>
 
-              <div className="mt-6 flex items-center justify-center gap-2 text-[10px] text-gray-400 italic">
-                <span>🛡️ SSL Secure Payment</span>
-                <span>•</span>
-                <span>⭐ 4.9/5 Rating</span>
+              <div className="flex flex-col items-center gap-4 mt-8">
+                <p className="text-[9px] text-gray-300 font-bold uppercase tracking-widest">
+                  🔒 Encrypted Payment System
+                </p>
+                <div className="flex gap-4 grayscale opacity-30">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" className="h-2" alt="Visa" />
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" className="h-4" alt="Mastercard" />
+                </div>
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>

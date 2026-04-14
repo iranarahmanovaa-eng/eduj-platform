@@ -3,96 +3,84 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
-export default function CreateCourse() {
+export default function CreateCoursePage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [image, setImage] = useState("");
   const [loading, setLoading] = useState(false);
-  
   const router = useRouter();
+  const brandColor = "#004d57";
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); 
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
-
-    const { error } = await supabase
-      .from("courses")
-      .insert([{ title, description, image }]);
-
-    if (error) {
-      alert("Error: " + error.message);
-    } else {
-      alert("🎉 Course successfully created!");
-      router.push("/"); 
-    }
     
+    const { error } = await supabase.from("courses").insert([{ title, description, image }]);
+    
+    if (error) alert(error.message);
+    else {
+      alert("🚀 Course Created Successfully!");
+      router.push("/");
+    }
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
-        <Link href="/" className="text-[#06402B] font-bold mb-8 inline-block hover:opacity-80 transition-opacity">
-          ← Back to Home
-        </Link>
+    <div className="min-h-screen bg-gray-50 py-20 px-6">
+      <div className="max-w-3xl mx-auto">
+        <header className="mb-12">
+          <h1 className="text-5xl font-black italic uppercase tracking-tighter mb-4" style={{color: brandColor}}>Create New Course</h1>
+          <p className="text-gray-500 font-bold uppercase text-xs tracking-widest">Instructor Dashboard</p>
+        </header>
 
-        <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 p-8 md:p-12">
-          <h1 className="text-4xl font-black text-[#06402B] mb-2 tracking-tight">
-            Create a New Course
-          </h1>
-          <p className="text-gray-500 mb-8">Fill in the details below to add a new course to your platform.</p>
+        <form onSubmit={handleCreate} className="bg-white p-10 md:p-14 rounded-[3rem] shadow-xl space-y-8 border border-gray-100">
+          <div className="space-y-2">
+            <label className="text-xs font-black uppercase italic text-gray-400 ml-2">Course Title</label>
+            <input 
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Advanced UI Design" 
+              className="w-full p-5 rounded-2xl border bg-gray-50 outline-none focus:ring-1 text-lg font-bold" 
+              style={{"--tw-ring-color": brandColor} as any} 
+            />
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Course Title</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Advanced React Patterns"
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#06402B] focus:bg-white transition-all"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
+          <div className="space-y-2">
+            <label className="text-xs font-black uppercase italic text-gray-400 ml-2">Description</label>
+            <textarea 
+              required
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              placeholder="What will students learn?" 
+              className="w-full p-5 rounded-2xl border bg-gray-50 outline-none focus:ring-1 font-medium" 
+              style={{"--tw-ring-color": brandColor} as any} 
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
-              <textarea
-                required
-                rows={4}
-                placeholder="What will students learn in this course?"
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#06402B] focus:bg-white transition-all resize-none"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
+          <div className="space-y-2">
+            <label className="text-xs font-black uppercase italic text-gray-400 ml-2">Thumbnail URL</label>
+            <input 
+              required
+              value={image}
+              onChange={(e) => setImage(e.target.value)}
+              placeholder="https://images.unsplash.com/..." 
+              className="w-full p-5 rounded-2xl border bg-gray-50 outline-none focus:ring-1" 
+              style={{"--tw-ring-color": brandColor} as any} 
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">Image URL (Optional)</label>
-              <input
-                type="url"
-                placeholder="https://images.unsplash.com/..."
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#06402B] focus:bg-white transition-all"
-                value={image}
-                onChange={(e) => setImage(e.target.value)}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#06402B] text-white py-4 rounded-xl font-bold hover:bg-[#043020] transition-all shadow-lg active:scale-95 disabled:opacity-70 flex justify-center items-center"
-            >
-              {loading ? (
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-              ) : (
-                "Publish Course"
-              )}
-            </button>
-          </form>
-        </div>
+          <button 
+            type="submit"
+            disabled={loading}
+            style={{backgroundColor: brandColor}}
+            className="w-full text-white py-6 rounded-2xl font-black italic uppercase shadow-2xl hover:scale-[1.01] transition-all disabled:opacity-50"
+          >
+            {loading ? "PUBLISHING..." : "PUBLISH COURSE"}
+          </button>
+        </form>
       </div>
     </div>
   );

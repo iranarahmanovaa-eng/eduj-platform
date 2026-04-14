@@ -1,82 +1,54 @@
 "use client";
-
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase"; // Supabase bağlantımız
 
-export default function Home() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [courses, setCourses] = useState<any[]>([]); // Bazadan gələn kurslar
-  const [loading, setLoading] = useState(true); // Yüklənmə statusu
+export default function HomePage() {
+  const [courses, setCourses] = useState<any[]>([]);
+  const brandColor = "#004d57";
 
-  // Səhifə açılanda kursları Supabase-dən çəkirik
   useEffect(() => {
-    const fetchCourses = async () => {
-      const { data, error } = await supabase
-        .from("courses")
-        .select("*")
-        .order("created_at", { ascending: false }); // Ən yenilər yuxarıda
-
-      if (data) {
-        setCourses(data);
-      }
-      setLoading(false);
-    };
-
-    fetchCourses();
+    setCourses([
+      { id: "1", title: "Sıfırdan Proqramlaşdırma", image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&q=80" },
+      { id: "2", title: "Dizayn Əsasları", image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80" },
+      { id: "3", title: "Data Analitika", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80" }
+    ]);
   }, []);
 
-  // Axtarışa görə kursları süzürük
-  const filteredCourses = courses.filter((course) =>
-    course.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12">
-      {/* Header & Search Section */}
-      <div className="text-center mb-16">
-        <h1 className="text-5xl font-black text-[#06402B] mb-6 tracking-tight">
-          What will you learn today?
-        </h1>
-        <div className="relative max-w-2xl mx-auto">
-          <input
-            type="text"
-            placeholder="Search for courses (e.g. Design, Data...)"
-            className="w-full bg-white border-2 border-gray-100 rounded-2xl py-4 px-8 text-lg shadow-xl focus:outline-none focus:border-[#06402B] transition-all"
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <div className="absolute right-4 top-4 text-gray-400">
-             🔍
+    <div className="min-h-screen bg-white">
+      {/* HERO SECTION */}
+      <section style={{ backgroundColor: brandColor }} className="py-20 px-6 text-center text-white relative overflow-hidden">
+        <div className="max-w-4xl mx-auto relative z-10">
+          <h1 className="text-5xl md:text-7xl font-black italic uppercase tracking-tighter mb-6">
+            Master New Skills <br /> <span className="text-teal-300">Every Single Day.</span>
+          </h1>
+          <p className="text-lg opacity-80 mb-10 max-w-2xl mx-auto font-medium">
+            Join the premium community of learners and experts worldwide.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <button className="bg-white text-[#004d57] px-8 py-4 rounded-2xl font-black uppercase italic shadow-xl">Get Started</button>
+            <button className="border-2 border-white/30 px-8 py-4 rounded-2xl font-black uppercase italic hover:bg-white/10">View Pricing</button>
           </div>
         </div>
-      </div>
+      </section>
 
-      <h2 className="text-2xl font-bold text-gray-800 mb-8 px-2">
-        {searchTerm ? `Results for "${searchTerm}"` : "Popular Courses"}
-      </h2>
-
-      {/* Yüklənmə animasıyası */}
-      {loading ? (
-        <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#06402B]"></div>
-        </div>
-      ) : filteredCourses.length > 0 ? (
+      {/* COURSES SECTION */}
+      <div className="max-w-7xl mx-auto py-20 px-6">
+        <h2 className="text-2xl font-black italic uppercase mb-12 flex items-center gap-4">
+          <span className="w-8 h-1" style={{ backgroundColor: brandColor }}></span>
+          Popular Courses
+        </h2>
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {filteredCourses.map((course) => (
-            <div key={course.id} className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 group">
-              <div className="relative h-56 overflow-hidden">
-                <img 
-                  src={course.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&q=80"} 
-                  alt={course.title} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                />
-              </div>
+          {courses.map((course) => (
+            <div key={course.id} className="group border border-gray-100 rounded-[2.5rem] overflow-hidden hover:shadow-2xl transition-all duration-500">
+              <img src={course.image} alt={course.title} className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-700" />
               <div className="p-8">
-                <h3 className="text-2xl font-bold text-[#06402B] mb-3">{course.title}</h3>
-                <p className="text-gray-500 text-sm mb-8 leading-relaxed line-clamp-2">{course.description}</p>
+                <h3 className="text-xl font-black uppercase italic mb-4" style={{ color: brandColor }}>{course.title}</h3>
                 <Link 
                   href={`/course/${course.id}`}
-                  className="inline-block w-full text-center bg-[#06402B] text-white py-4 rounded-2xl font-bold hover:bg-[#043020] transition-all shadow-lg active:scale-95"
+                  style={{ backgroundColor: brandColor }}
+                  className="w-full block text-center text-white py-4 rounded-2xl font-black uppercase italic shadow-lg active:scale-95 transition-all"
                 >
                   View Course
                 </Link>
@@ -84,11 +56,7 @@ export default function Home() {
             </div>
           ))}
         </div>
-      ) : (
-        <div className="text-center py-24 bg-gray-50 rounded-[3rem] border-2 border-dashed border-gray-200">
-          <p className="text-gray-400 text-xl font-medium">No courses found matching your search.</p>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

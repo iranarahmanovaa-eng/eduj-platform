@@ -1,138 +1,123 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 
-export default function CourseDetails() {
+const COURSE_DATA = {
+  "1": {
+    title: "Sıfırdan Proqramlaşdırma",
+    teacher: "Irana Rahmanova",
+    lessons: [
+      { id: "l1", title: "01. Introduction (Free Preview)", videoId: "m_X6Rxh6y8E", isFree: true },
+      { id: "l2", title: "02. Setting Up Environment", videoId: "66vWv8-KndI", isFree: false },
+      { id: "l3", title: "03. Advanced Next.js Logic", videoId: "ua-CiDNNj30", isFree: false },
+    ]
+  },
+  "2": {
+    title: "Dizayn Əsasları",
+    teacher: "Rashad Aliyev",
+    lessons: [
+      { id: "l1", title: "01. Design Thinking (Free Preview)", videoId: "66vWv8-KndI", isFree: true },
+      { id: "l2", title: "02. Figma Basics", videoId: "m_X6Rxh6y8E", isFree: false },
+    ]
+  }
+};
+
+export default function CourseVideoPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
+  const course = COURSE_DATA[id as keyof typeof COURSE_DATA] || COURSE_DATA["1"];
   
-  const [course, setCourse] = useState<any>(null);
-  const [lessons, setLessons] = useState<any[]>([]); 
-  const [activeLesson, setActiveLesson] = useState<any>(null); 
-  const [loading, setLoading] = useState(true);
+  const [activeLesson, setActiveLesson] = useState(course.lessons[0]);
+  const [completedLessons, setCompletedLessons] = useState<string[]>([]);
+  const brandColor = "#004d57";
 
-  useEffect(() => {
-    const fetchData = async () => {
-      // 1. Kursun məlumatlarını gətiririk
-      const { data: courseData } = await supabase
-        .from("courses")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      // 2. Bu kursa aid dərsləri gətiririk
-      const { data: lessonsData } = await supabase
-        .from("lessons")
-        .select("*")
-        .eq("course_id", id)
-        .order("order_index", { ascending: true });
-
-      if (courseData) setCourse(courseData);
-      
-      if (lessonsData && lessonsData.length > 0) {
-        setLessons(lessonsData);
-        setActiveLesson(lessonsData[0]); 
-      }
-      setLoading(false);
-    };
-
-    if (id) fetchData();
-  }, [id]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex justify-center items-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#06402B]"></div>
-      </div>
+  // Dərsi bitmiş kimi işarələmək funksiyası
+  const toggleComplete = (lessonId: string) => {
+    setCompletedLessons(prev => 
+      prev.includes(lessonId) ? prev.filter(id => id !== lessonId) : [...prev, lessonId]
     );
-  }
+  };
 
-  if (!course) {
-    return (
-      <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">Course not found</h1>
-        <Link href="/" className="bg-[#06402B] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#043020]">
-          Go back home
-        </Link>
-      </div>
-    );
-  }
+  const isCourseFinished = completedLessons.length === course.lessons.length;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <Link href="/" className="text-[#06402B] font-bold mb-6 inline-block hover:opacity-80">
-        ← Back to Home
+    <div className="max-w-7xl mx-auto px-6 py-10 font-sans">
+      <Link href="/" className="text-[10px] font-black uppercase italic mb-6 inline-block text-gray-400 hover:text-[#004d57]">
+        ← Back to Browse
       </Link>
 
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Sol tərəf: Video Player və Kurs Məlumatı */}
-        <div className="flex-1">
-          <div className="w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl relative">
-            {activeLesson ? (
-              activeLesson.is_free ? (
-                <iframe 
-                  src={activeLesson.video_url} 
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                  allowFullScreen
-                ></iframe>
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900 text-white p-6 text-center">
-                  <span className="text-6xl mb-4">🔒</span>
-                  <h2 className="text-2xl font-bold mb-2">This lesson is locked</h2>
-                  <p className="text-gray-400 mb-6">Purchase the course to unlock all lessons and premium materials.</p>
-                  
-                  {/* ÖDƏNİŞ SƏHİFƏSİNƏ KEÇİD DÜYMƏSİ */}
-                  <Link 
-                    href={`/checkout/${course.id}`}
-                    className="bg-[#06402B] hover:bg-[#043020] px-8 py-4 rounded-xl font-bold text-lg transition-all shadow-lg active:scale-95"
-                  >
-                    Unlock Full Course
-                  </Link>
-                </div>
-              )
-            ) : (
-              <img src={course.image} alt={course.title} className="w-full h-full object-cover opacity-50" />
-            )}
-          </div>
-
-          <div className="mt-8">
-            <h1 className="text-4xl font-black text-[#06402B] mb-4">{course.title}</h1>
-            <p className="text-gray-600 text-lg leading-relaxed">{course.description}</p>
-          </div>
-        </div>
-
-        {/* Sağ tərəf: Dərslərin Siyahısı */}
-        <div className="w-full lg:w-1/3 bg-white border border-gray-100 rounded-3xl p-6 shadow-xl h-fit sticky top-8">
-          <h3 className="text-2xl font-bold text-gray-800 mb-6">Course Content</h3>
-          
-          {lessons.length > 0 ? (
-            <div className="space-y-3">
-              {lessons.map((lesson) => (
-                <button 
-                  key={lesson.id}
-                  onClick={() => setActiveLesson(lesson)}
-                  className={`w-full text-left p-4 rounded-xl flex items-center justify-between transition-all ${
-                    activeLesson?.id === lesson.id 
-                      ? "bg-[#06402B] text-white shadow-md" 
-                      : "bg-gray-50 hover:bg-gray-100 text-gray-700"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">
-                      {lesson.is_free ? "▶️" : "🔒"}
-                    </span>
-                    <span className="font-semibold">{lesson.title}</span>
-                  </div>
-                </button>
-              ))}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="lg:col-span-2">
+          {/* Video Player Section */}
+          {activeLesson.isFree ? (
+            <div className="relative pt-[56.25%] bg-black rounded-[2rem] overflow-hidden shadow-2xl">
+              <iframe className="absolute top-0 left-0 w-full h-full" src={`https://www.youtube.com/embed/${activeLesson.videoId}`} allowFullScreen></iframe>
             </div>
           ) : (
-            <p className="text-gray-500 italic">No lessons added yet.</p>
+            <div className="relative pt-[56.25%] bg-gray-900 rounded-[2rem] overflow-hidden flex flex-col items-center justify-center text-center p-10 border-4 border-dashed border-gray-800">
+              <span className="text-6xl mb-6">🔒</span>
+              <h2 className="text-white text-2xl font-black italic uppercase mb-4">Premium Lesson Locked</h2>
+              <button onClick={() => router.push(`/checkout/${id}`)} style={{ backgroundColor: brandColor }} className="text-white px-10 py-4 rounded-2xl font-black italic uppercase shadow-xl hover:scale-105 transition-all">Buy Full Course</button>
+            </div>
           )}
+
+          <div className="mt-8 flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-black italic uppercase tracking-tighter" style={{ color: brandColor }}>{activeLesson.title}</h1>
+              <p className="text-gray-400 font-bold mt-2">Instructor: {course.teacher}</p>
+            </div>
+            
+            {/* Dərsi Bitirdim Düyməsi */}
+            <button 
+              onClick={() => toggleComplete(activeLesson.id)}
+              className={`px-6 py-3 rounded-xl font-black italic uppercase text-xs transition-all ${completedLessons.includes(activeLesson.id) ? "bg-green-500 text-white" : "bg-gray-100 text-gray-400 hover:bg-gray-200"}`}
+            >
+              {completedLessons.includes(activeLesson.id) ? "✓ Completed" : "Mark as Finished"}
+            </button>
+          </div>
+          
+          {/* Bütün kurs bitəndə görünən böyük düymə */}
+          {isCourseFinished && (
+            <div className="mt-12 p-10 bg-green-50 rounded-[3rem] border-2 border-dashed border-green-200 text-center animate-bounce-slow">
+              <span className="text-5xl mb-4 block">🏆</span>
+              <h2 className="text-2xl font-black italic uppercase text-green-800 mb-2">Congratulations!</h2>
+              <p className="text-green-600 font-bold text-sm mb-6 uppercase tracking-widest">You have mastered this course!</p>
+              <button className="bg-green-600 text-white px-12 py-5 rounded-2xl font-black italic uppercase shadow-xl hover:bg-green-700 transition-all">
+                Claim My Certificate
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Right Side: Lesson List with Checkmarks */}
+        <div className="space-y-4">
+          <h3 className="text-xs font-black uppercase italic tracking-widest text-gray-400 mb-4 px-2">Progress: {Math.round((completedLessons.length / course.lessons.length) * 100)}%</h3>
+          <div className="space-y-3">
+            {course.lessons.map((lesson) => (
+              <div 
+                key={lesson.id}
+                className={`w-full flex items-center gap-3 p-5 rounded-2xl border transition-all ${activeLesson.id === lesson.id ? "bg-teal-50 border-[#004d57]" : "bg-white border-gray-100"}`}
+              >
+                <input 
+                  type="checkbox" 
+                  checked={completedLessons.includes(lesson.id)}
+                  onChange={() => toggleComplete(lesson.id)}
+                  className="w-5 h-5 accent-green-500 cursor-pointer"
+                />
+                <button
+                  onClick={() => setActiveLesson(lesson)}
+                  className="flex-1 text-left group"
+                >
+                  <span className={`text-[10px] font-black uppercase ${lesson.isFree ? "text-teal-600" : "opacity-40"}`}>{lesson.isFree ? "Free" : "Premium"}</span>
+                  <p className={`font-bold text-sm transition-colors ${completedLessons.includes(lesson.id) ? "text-gray-400 line-through" : "text-gray-800"}`}>{lesson.title}</p>
+                </button>
+                <span className="text-lg opacity-30">{lesson.isFree ? "▶" : "🔒"}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

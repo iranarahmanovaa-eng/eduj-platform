@@ -1,70 +1,73 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const brandColor = "#004d57";
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setErrorMsg("");
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      setErrorMsg("Error: " + error.message);
-    } else {
-      router.push("/");
-      router.refresh();
-    }
-    setLoading(false);
+    // Giriş simulyasiyası
+    setTimeout(() => {
+      localStorage.setItem("isLoggedIn", "true");
+      setLoading(false);
+      // Girişdən sonra birbaşa profilə atırıq
+      router.push("/profile");
+    }, 800);
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center bg-gray-50 py-12 px-4">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-3xl shadow-lg border border-gray-100">
-        <div className="text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">Welcome Back</h2>
-          <p className="mt-2 text-sm text-gray-500">Sign in to your account</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
+      <div className="bg-white p-12 rounded-[3.5rem] shadow-2xl w-full max-w-md border border-gray-100">
+        <div className="text-center mb-10">
+          <h2 className="text-4xl font-black italic uppercase tracking-tighter" style={{ color: brandColor }}>
+            Welcome Back
+          </h2>
+          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mt-2">Access your premium courses</p>
         </div>
         
-        <form className="mt-8 space-y-4" onSubmit={handleLogin}>
-          <input
-            type="email"
-            placeholder="Email Address"
-            required
-            className="rounded-xl block w-full px-4 py-3 border border-gray-200 focus:ring-2 focus:ring-[#9e2a5e] outline-none"
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            required
-            className="rounded-xl block w-full px-4 py-3 border border-gray-200 focus:ring-2 focus:ring-[#9e2a5e] outline-none"
-            onChange={(e) => setPassword(e.target.value)}
-          />
-
-          <button
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div className="space-y-1">
+            <label className="text-[9px] font-black uppercase italic text-gray-400 ml-4">Email Address</label>
+            <input 
+              required
+              type="email" 
+              placeholder="name@example.com" 
+              className="w-full p-5 rounded-2xl border border-gray-100 bg-gray-50 outline-none focus:ring-2 focus:ring-teal-500/20 transition-all font-bold" 
+            />
+          </div>
+          
+          <div className="space-y-1">
+            <label className="text-[9px] font-black uppercase italic text-gray-400 ml-4">Password</label>
+            <input 
+              required
+              type="password" 
+              placeholder="••••••••" 
+              className="w-full p-5 rounded-2xl border border-gray-100 bg-gray-50 outline-none focus:ring-2 focus:ring-teal-500/20 transition-all font-bold" 
+            />
+          </div>
+          
+          <button 
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 bg-[#9e2a5e] text-white font-bold rounded-xl hover:bg-[#86214f] transition-all disabled:opacity-50"
+            style={{ backgroundColor: brandColor }}
+            className="w-full text-white py-6 mt-6 rounded-2xl font-black uppercase italic text-sm shadow-xl hover:translate-y-[-2px] active:scale-95 transition-all disabled:opacity-50"
           >
-            {loading ? "Signing In..." : "Log In"}
+            {loading ? "Verifying..." : "Sign In to Eduj"}
           </button>
-
-          {errorMsg && <p className="text-red-500 text-center text-sm font-medium">{errorMsg}</p>}
         </form>
-        
-        <p className="text-center text-sm text-gray-600">
-          Don't have an account? <Link href="/signup" className="font-bold text-[#9e2a5e]">Sign Up</Link>
+
+        <p className="text-center mt-10 text-[10px] text-gray-400 font-black uppercase tracking-widest">
+          New here? 
+          <Link href="/signup" style={{color: brandColor}} className="ml-2 underline">
+            Create Account
+          </Link>
         </p>
       </div>
     </div>
