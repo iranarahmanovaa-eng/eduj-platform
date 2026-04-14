@@ -1,33 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-
-const ALL_COURSES = [
-  {
-    id: "1",
-    title: "Programming from Scratch",
-    description: "Build modern websites with Next.js and Tailwind CSS.",
-    image: "https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=500&q=80",
-  },
-  {
-    id: "2",
-    title: "Design Fundamentals",
-    description: "Master user interface design using Figma.",
-    image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=500&q=80",
-  },
-  {
-    id: "3",
-    title: "Data Analytics",
-    description: "Analyze and visualize data like a professional.",
-    image: "https://images.unsplash.com/photo-1551288049-bbbda536ad89?w=500&q=80",
-  }
-];
+import { supabase } from "@/lib/supabase"; // Supabase bağlantımız
 
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [courses, setCourses] = useState<any[]>([]); // Bazadan gələn kurslar
+  const [loading, setLoading] = useState(true); // Yüklənmə statusu
 
-  const filteredCourses = ALL_COURSES.filter((course) =>
+  // Səhifə açılanda kursları Supabase-dən çəkirik
+  useEffect(() => {
+    const fetchCourses = async () => {
+      const { data, error } = await supabase
+        .from("courses")
+        .select("*")
+        .order("created_at", { ascending: false }); // Ən yenilər yuxarıda
+
+      if (data) {
+        setCourses(data);
+      }
+      setLoading(false);
+    };
+
+    fetchCourses();
+  }, []);
+
+  // Axtarışa görə kursları süzürük
+  const filteredCourses = courses.filter((course) =>
     course.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -55,23 +55,25 @@ export default function Home() {
         {searchTerm ? `Results for "${searchTerm}"` : "Popular Courses"}
       </h2>
 
-      {filteredCourses.length > 0 ? (
+      {/* Yüklənmə animasıyası */}
+      {loading ? (
+        <div className="flex justify-center items-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#06402B]"></div>
+        </div>
+      ) : filteredCourses.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {filteredCourses.map((course) => (
             <div key={course.id} className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 group">
               <div className="relative h-56 overflow-hidden">
                 <img 
-                  src={course.image} 
+                  src={course.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&q=80"} 
                   alt={course.title} 
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                 />
-                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-4 py-1 rounded-full text-[10px] font-black uppercase text-[#06402B] tracking-widest">
-                  Best Seller
-                </div>
               </div>
               <div className="p-8">
                 <h3 className="text-2xl font-bold text-[#06402B] mb-3">{course.title}</h3>
-                <p className="text-gray-500 text-sm mb-8 leading-relaxed">{course.description}</p>
+                <p className="text-gray-500 text-sm mb-8 leading-relaxed line-clamp-2">{course.description}</p>
                 <Link 
                   href={`/course/${course.id}`}
                   className="inline-block w-full text-center bg-[#06402B] text-white py-4 rounded-2xl font-bold hover:bg-[#043020] transition-all shadow-lg active:scale-95"
